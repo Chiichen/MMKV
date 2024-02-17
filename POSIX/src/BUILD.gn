@@ -1,0 +1,5 @@
+shared_library("mmkv") {
+  sources = [ "libmmkv.cpp" ]
+  public_deps = [ "../../Core:core" ]
+  include_dirs = [ "../../Core" ]
+}

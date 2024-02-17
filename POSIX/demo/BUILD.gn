@@ -1,0 +1,40 @@
+FORCE_POSIX = false
+if (target_os == "mac" || target_os == "ios") {
+  FORCE_POSIX = true
+}
+executable("demo") {
+  deps = [
+    ":TestInterProcessLock",
+    ":UnitTest",
+    ":process",
+    "../src:mmkv",
+  ]
+  sources = [ "demo.cpp" ]
+  if (FORCE_POSIX) {
+    defines = [ "FORCE_POSIX" ]
+  }
+}
+
+executable("process") {
+  deps = [ "../src:mmkv" ]
+  sources = [ "process.cpp" ]
+  if (FORCE_POSIX) {
+    defines = [ "FORCE_POSIX" ]
+  }
+}
+
+executable("TestInterProcessLock") {
+  deps = [ "../src:mmkv" ]
+  sources = [ "TestInterProcessLock.cpp" ]
+  if (FORCE_POSIX) {
+    defines = [ "FORCE_POSIX" ]
+  }
+}
+
+executable("UnitTest") {
+  deps = [ "../src:mmkv" ]
+  sources = [ "UnitTest.cpp" ]
+  if (FORCE_POSIX) {
+    defines = [ "FORCE_POSIX" ]
+  }
+}

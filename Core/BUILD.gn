@@ -1,0 +1,124 @@
+ASM_FLAGS = ""
+FORCE_POSIX = false
+if (target_os == "mac" || target_os == "ios") {
+  #     # tell ranlib to ignore empty compilation units
+  # SET(CMAKE_C_ARCHIVE_FINISH   "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
+  # SET(CMAKE_CXX_ARCHIVE_FINISH "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
+  # # prevents ar from invoking ranlib, let CMake do it
+  # SET(CMAKE_C_ARCHIVE_CREATE   "<CMAKE_AR> qc -S <TARGET> <LINK_FLAGS> <OBJECTS>")
+  # SET(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> qc -S <TARGET> <LINK_FLAGS> <OBJECTS>")
+  FORCE_POSIX = true
+}
+
+# //TODO
+# set(can_use_assembler TRUE)
+# enable_language(ASM)
+# IF("${ANDROID_ABI}" STREQUAL "arm64-v8a")
+#     SET(ASM_OPTIONS "-x assembler-with-cpp")
+#     SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8+crypto -D__ANDROID__")
+# ELSEIF("${ANDROID_ABI}" STREQUAL "armeabi-v7a")
+#     SET(ASM_OPTIONS "-x assembler-with-cpp")
+#     SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv7a -D__ANDROID__")
+# ELSEIF("${ANDROID_ABI}" STREQUAL "armeabi")
+#     SET(ASM_OPTIONS "-x assembler-with-cpp")
+#     SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv5 -D__ANDROID__")
+# ENDIF()
+if (target_os == "android" || target_os == "linux" || target_os == "chromeos") {
+  if (target_cpu == "arm64") {
+    # SET(ASM_OPTIONS "-x assembler-with-cpp")
+    # SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8-a+crypto")
+    ASM_OPTIONS = "-x assembler-with-cpp"
+    ASM_FLAGS = "${CFLAGS} ${ASM_OPTIONS} -march=armv8-a+crypto"
+  }
+}
+
+static_library("core") {
+  sources = [
+    "CodedInputData.cpp",
+    "CodedInputData.h",
+    "CodedInputDataCrypt.cpp",
+    "CodedInputDataCrypt.h",
+    "CodedInputDataCrypt_OSX.cpp",
+    "CodedInputData_OSX.cpp",
+    "CodedOutputData.cpp",
+    "CodedOutputData.h",
+    "InterProcessLock.cpp",
+    "InterProcessLock.h",
+    "InterProcessLock_Android.cpp",
+    "InterProcessLock_Win32.cpp",
+    "KeyValueHolder.cpp",
+    "KeyValueHolder.h",
+    "MMBuffer.cpp",
+    "MMBuffer.h",
+    "MMKV.cpp",
+
+    # Provides a relative path to your source file(s).
+    "MMKV.h",
+    "MMKVLog.cpp",
+    "MMKVLog.h",
+    "MMKVLog_Android.cpp",
+    "MMKVMetaInfo.hpp",
+    "MMKVPredef.h",
+    "MMKV_Android.cpp",
+    "MMKV_IO.cpp",
+    "MMKV_IO.h",
+    "MMKV_OSX.cpp",
+    "MemoryFile.cpp",
+    "MemoryFile.h",
+    "MemoryFile_Android.cpp",
+    "MemoryFile_Linux.cpp",
+    "MemoryFile_OSX.cpp",
+    "MemoryFile_Win32.cpp",
+    "MiniPBCoder.cpp",
+    "MiniPBCoder.h",
+    "MiniPBCoder_OSX.cpp",
+    "PBUtility.cpp",
+    "PBUtility.h",
+    "ThreadLock.cpp",
+    "ThreadLock.h",
+    "ThreadLock_Win32.cpp",
+    "aes/AESCrypt.cpp",
+    "aes/AESCrypt.h",
+    "aes/openssl/openssl_aes.h",
+    "aes/openssl/openssl_aes_core.cpp",
+    "aes/openssl/openssl_aes_locl.h",
+    "aes/openssl/openssl_arm_arch.h",
+    "aes/openssl/openssl_cfb128.cpp",
+    "aes/openssl/openssl_md32_common.h",
+    "aes/openssl/openssl_md5.h",
+    "aes/openssl/openssl_md5_dgst.cpp",
+    "aes/openssl/openssl_md5_locl.h",
+    "aes/openssl/openssl_md5_one.cpp",
+    "aes/openssl/openssl_opensslconf.h",
+    "crc32/Checksum.h",
+    "crc32/crc32_armv8.cpp",
+    "crc32/zlib/crc32.cpp",
+    "crc32/zlib/crc32.h",
+    "crc32/zlib/zconf.h",
+    "crc32/zlib/zutil.h",
+  ]
+  if (ASM_FLAGS != "") {
+    asmflags = [ ASM_FLAGS ]
+  }
+
+  if (FORCE_POSIX) {
+    defines = [ "FORCE_POSIX" ]
+  } else {
+    defines = []
+  }
+  if (current_toolchain != "//build/toolchain:msvc") {
+    sources += [
+      "aes/openssl/openssl_aes-armv4.S",
+      "aes/openssl/openssl_aesv8-armx.S",
+    ]
+  }
+  if (target_os == "win") {
+    defines += [
+      "UNICODE",
+      "_UNICODE",
+    ]
+  }
+
+  # //TODO search local zlib
+  defines += [ "MMKV_EMBED_ZLIB" ]
+}

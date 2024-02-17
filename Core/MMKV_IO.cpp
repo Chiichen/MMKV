@@ -38,6 +38,7 @@
 #include <cassert>
 #include <cstring>
 #include <ctime>
+#include <unistd.h>
 
 #ifdef MMKV_IOS
 #    include "MMKV_OSX.h"
@@ -1227,7 +1228,7 @@ static void fullWriteBackWholeData(MMBuffer allData, size_t totalSize, CodedOutp
             output->seek(dataSize);
         }
     }
-    [[maybe_unused]] auto writtenSize = (size_t)(output->curWritePointer() - originOutputPtr);
+    [[maybe_unused]] auto writtenSize = (size_t) (output->curWritePointer() - originOutputPtr);
     assert(writtenSize == totalSize);
 }
 

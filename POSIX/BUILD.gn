@@ -1,0 +1,7 @@
+group("POSIX") {
+  deps = [
+    "../Core",
+    "demo",
+    "src",
+  ]
+}
