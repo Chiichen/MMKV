@@ -20,23 +20,25 @@
 
 #include "InterProcessLock.h"
 #include "MMKV.h"
+#include "sys/resource.h"
+#include <cassert>
 #include <chrono>
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <limits>
+#include <math.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <string>
-#include <sys/wait.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <cstring>
-#include <cassert>
+#include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
 using namespace std;
 using namespace mmkv;
 
-string to_string(const vector<string> &arr, const char* sp = ", ") {
+string to_string(const vector<string> &arr, const char *sp = ", ") {
     string str;
     for (const auto &element : arr) {
         str += element;
@@ -374,7 +376,8 @@ void testBackup() {
     printf("backup all count: %zu\n", count);
     if (count > 0) {
         auto backupMMKV = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey, &rootDir);
-        cout << "check on backup [" << backupMMKV->mmapID() << "] allKeys: " << ::to_string(backupMMKV->allKeys(), ",\n") << endl;
+        cout << "check on backup [" << backupMMKV->mmapID()
+             << "] allKeys: " << ::to_string(backupMMKV->allKeys(), ",\n") << endl;
 
         backupMMKV = MMKV::mmkvWithID("brutleTest", MMKV_SINGLE_PROCESS, nullptr, &rootDir);
         cout << "check on backup [" << backupMMKV->mmapID() << "] allKeys count: " << backupMMKV->count() << endl;
@@ -405,7 +408,8 @@ void testRestore() {
     printf("restore all count: %zu\n", count);
     if (count > 0) {
         auto backupMMKV = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey);
-        cout << "check on restore [" << backupMMKV->mmapID() << "] allKeys: " << ::to_string(backupMMKV->allKeys(), ",\n") << endl;
+        cout << "check on restore [" << backupMMKV->mmapID()
+             << "] allKeys: " << ::to_string(backupMMKV->allKeys(), ",\n") << endl;
 
         backupMMKV = MMKV::mmkvWithID("brutleTest");
         cout << "check on restore [" << backupMMKV->mmapID() << "] allKeys count: " << backupMMKV->count() << endl;
@@ -451,10 +455,12 @@ void testExpectedCapacity() {
     auto mmkv0 = MMKV::mmkvWithID("testExpectedCapacity0", MMKV_SINGLE_PROCESS, nullptr, nullptr, 0);
     assert(mmkv0->totalSize() == DEFAULT_MMAP_SIZE);
 
-    auto mmkv1 = MMKV::mmkvWithID("testExpectedCapacity1", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE + 1);
+    auto mmkv1 =
+        MMKV::mmkvWithID("testExpectedCapacity1", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE + 1);
     assert(mmkv1->totalSize() == DEFAULT_MMAP_SIZE << 1);
 
-    auto mmkv2 = MMKV::mmkvWithID("testExpectedCapacity2", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE >> 1);
+    auto mmkv2 =
+        MMKV::mmkvWithID("testExpectedCapacity2", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE >> 1);
     assert(mmkv2->totalSize() == DEFAULT_MMAP_SIZE);
 
     auto mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3");
@@ -462,7 +468,8 @@ void testExpectedCapacity() {
     assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE);
     mmkv3->close();
     // expand it
-    mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 100 * DEFAULT_MMAP_SIZE + 100);
+    mmkv3 =
+        MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 100 * DEFAULT_MMAP_SIZE + 100);
     assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE * 101);
 
     // if new size is smaller than file size, keep file its origin size
@@ -694,7 +701,6 @@ void testOverride() {
         mmkv->removeValueForKey(key2);
         mmkv->trim();
     }
-
 }
 
 uint64_t getTimeInMs() {
@@ -791,7 +797,7 @@ void testCompareBeforeSet() {
         assert(actualSize1 == actualSize2);
         mmkv->set(v << 1, key);
         printf("testCompareBeforeSet: int32 value = %d\n", mmkv->getInt32(key));
-        assert(mmkv->getInt32(key)  == v << 1);
+        assert(mmkv->getInt32(key) == v << 1);
     }
 
     {
@@ -875,8 +881,8 @@ void testCompareBeforeSet() {
 
     bool ret = false;
     string resultString;
-    const char* raws = "🏊🏻®4️⃣🐅_";
-    const char* raws2 = "12🏊🏻e®4️⃣🐅_34)(*()";
+    const char *raws = "🏊🏻®4️⃣🐅_";
+    const char *raws2 = "12🏊🏻e®4️⃣🐅_34)(*()";
     {
         key = "char*";
         mmkv->set(raws, key);
@@ -959,23 +965,23 @@ void testCompareBeforeSet() {
         assert(vectorResult == v2);
     }
 
-//    {
-//        string key = "keyyy";
-//        auto mmkv1 = MMKV::mmkvWithID("testCompareBeforeSet1", MMKV_SINGLE_PROCESS, &key);
-//        mmkv1->enableCompareBeforeSet();
-//    }
+    //    {
+    //        string key = "keyyy";
+    //        auto mmkv1 = MMKV::mmkvWithID("testCompareBeforeSet1", MMKV_SINGLE_PROCESS, &key);
+    //        mmkv1->enableCompareBeforeSet();
+    //    }
 
-//    {
-//        auto mmkv2 = MMKV::mmkvWithID("testCompareBeforeSet2", MMKV_SINGLE_PROCESS);
-//        mmkv2->enableAutoKeyExpire();
-//        mmkv2->enableCompareBeforeSet();
-//    }
-//
-//    {
-//        auto mmkv3 = MMKV::mmkvWithID("testCompareBeforeSet3", MMKV_SINGLE_PROCESS);
-//        mmkv3->enableCompareBeforeSet();
-//        mmkv3->enableAutoKeyExpire();
-//    }
+    //    {
+    //        auto mmkv2 = MMKV::mmkvWithID("testCompareBeforeSet2", MMKV_SINGLE_PROCESS);
+    //        mmkv2->enableAutoKeyExpire();
+    //        mmkv2->enableCompareBeforeSet();
+    //    }
+    //
+    //    {
+    //        auto mmkv3 = MMKV::mmkvWithID("testCompareBeforeSet3", MMKV_SINGLE_PROCESS);
+    //        mmkv3->enableCompareBeforeSet();
+    //        mmkv3->enableAutoKeyExpire();
+    //    }
 
     {
         actualSize1 = -1;
@@ -991,7 +997,7 @@ void testCompareBeforeSet() {
         actualSize1 = actualSize2;
         printf("%d\n", mmkv1->getBool("key1", false));
         printf("actualSize = %lu\n", mmkv1->actualSize());
-        assert( mmkv1->getBool("key1", false));
+        assert(mmkv1->getBool("key1", false));
         mmkv1->set(true, "key1");
         actualSize2 = mmkv1->actualSize();
         assert(actualSize2 > actualSize1);
@@ -1060,7 +1066,7 @@ void testCompareBeforeSet() {
 void testFtruncateFail() {
     auto mmkv = MMKV::mmkvWithID("testFtruncateFail");
     signal(SIGXFSZ, SIG_IGN);
-    struct rlimit rlim_new,rlim;
+    struct rlimit rlim_new, rlim;
     string bigValue(1000, '0');
     if (getrlimit(RLIMIT_FSIZE, &rlim) == 0) {
         rlim_new.rlim_cur = rlim_new.rlim_max = 5000 * 1024;
@@ -1069,7 +1075,7 @@ void testFtruncateFail() {
 
         for (int i = 0; i < 1000000; i++) {
             string key = "qwerttt" + to_string(i);
-//            fail to truncate [/tmp/mmkv/testFtruncateFail] to size 8388608, File too large
+            //            fail to truncate [/tmp/mmkv/testFtruncateFail] to size 8388608, File too large
             bool ret = mmkv->set(bigValue, key);
             if (!ret) {
                 break;
@@ -1154,11 +1160,11 @@ int main() {
     testOnlyOneKey();
     testOverride();
     testClearAllKeepSpace();
-//    testGetStringSpeed();
+    //    testGetStringSpeed();
     testCompareBeforeSet();
     testBackup();
     testRestore();
     testAutoExpiration();
-//    testFtruncateFail();
+    //    testFtruncateFail();
     testRemoveStorage();
 }
